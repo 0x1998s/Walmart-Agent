@@ -1,0 +1,105 @@
+# 🛒 沃尔玛AI Agent平台 - Prometheus配置
+# Walmart AI Agent Platform - Prometheus Configuration
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'walmart-ai-agent'
+    environment: 'production'
+
+# 告警规则文件
+rule_files:
+  - "alert_rules.yml"
+
+# 告警管理器配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # 沃尔玛AI Agent后端服务
+  - job_name: 'walmart-backend'
+    static_configs:
+      - targets: ['backend:8080']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # Node Exporter - 系统监控
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # PostgreSQL监控
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis监控
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Nginx监控
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['nginx:80']
+    scrape_interval: 30s
+    metrics_path: /nginx_status
+    params:
+      format: ['prometheus']
+
+  # ChromaDB监控
+  - job_name: 'chromadb'
+    static_configs:
+      - targets: ['chromadb:8000']
+    scrape_interval: 30s
+    metrics_path: /api/v1/metrics
+
+  # Celery监控
+  - job_name: 'celery'
+    static_configs:
+      - targets: ['flower:5555']
+    scrape_interval: 30s
+    metrics_path: /api/workers
+
+  # 自定义业务指标
+  - job_name: 'walmart-business-metrics'
+    static_configs:
+      - targets: ['backend:8080']
+    scrape_interval: 60s
+    metrics_path: /api/v1/metrics/business
+    honor_labels: true
+
+# 远程写入配置 (可选 - 用于长期存储)
+# remote_write:
+#   - url: "http://remote-storage:9201/write"
+#     queue_config:
+#       max_samples_per_send: 1000
+#       max_shards: 200
+#       capacity: 2500
+
+# 存储配置
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 10GB
+    path: /prometheus
+    wal-compression: true

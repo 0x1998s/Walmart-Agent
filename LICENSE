@@ -1,0 +1,86 @@
+MIT License
+
+Copyright (c) 2025 Jemmy Yang (Walmart AI Agent Platform)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## 📋 第三方许可证声明
+
+本项目使用了以下开源软件和库：
+
+### 后端依赖
+- **FastAPI** (MIT License) - 高性能Web框架
+- **SQLAlchemy** (MIT License) - Python SQL工具包
+- **Pydantic** (MIT License) - 数据验证库
+- **OpenAI** (MIT License) - OpenAI API客户端
+- **LangChain** (MIT License) - LLM应用开发框架
+- **ChromaDB** (Apache 2.0) - 向量数据库
+- **Redis** (BSD License) - 内存数据结构存储
+- **PostgreSQL** (PostgreSQL License) - 关系型数据库
+- **Celery** (BSD License) - 分布式任务队列
+
+### 前端依赖
+- **React** (MIT License) - 用户界面库
+- **TypeScript** (Apache 2.0) - JavaScript超集
+- **Ant Design** (MIT License) - 企业级UI设计语言
+- **ECharts** (Apache 2.0) - 数据可视化库
+- **Vite** (MIT License) - 前端构建工具
+
+### 开发工具
+- **Docker** (Apache 2.0) - 容器化平台
+- **Nginx** (BSD License) - Web服务器
+- **Prometheus** (Apache 2.0) - 监控系统
+- **Grafana** (AGPL 3.0) - 可视化平台
+
+感谢所有开源项目的贡献者！
+
+---
+
+## 🚨 使用条款
+
+### 允许的使用
+✅ 商业使用  
+✅ 修改  
+✅ 分发  
+✅ 私人使用  
+
+### 限制
+❌ 责任  
+❌ 保证  
+
+### 条件
+📋 包含许可证和版权声明  
+📋 包含原始许可证文本  
+
+---
+
+## 📞 联系方式
+
+如有许可证相关问题，请联系：
+
+**作者**: Jemmy Yang  
+**邮箱**: jemmy_yang@yeah.net  
+**GitHub**: [@0x1998s](https://github.com/0x1998s)  
+**项目地址**: [https://github.com/0x1998s/Walmart-Agent](https://github.com/0x1998s/Walmart-Agent)
+
+---
+
+*最后更新: 2025年9月*

@@ -1,0 +1,59 @@
+# 🛒 沃尔玛AI Agent平台 - Grafana数据源配置
+# Walmart AI Agent Platform - Grafana Datasources Configuration
+
+apiVersion: 1
+
+datasources:
+  # Prometheus数据源
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      queryTimeout: 60s
+      timeInterval: 15s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger
+    version: 1
+
+  # PostgreSQL数据源 (用于业务数据查询)
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: walmart_ai_agent
+    user: walmart_admin
+    secureJsonData:
+      password: walmart_secure_2024
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      postgresVersion: 1500
+      timescaledb: false
+    version: 1
+
+  # Redis数据源 (可选)
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: redis:6379
+    secureJsonData:
+      password: walmart_redis_2024
+    jsonData:
+      client: standalone
+      poolSize: 5
+      timeout: 10
+      pingInterval: 0
+      pipelineWindow: 0
+    version: 1
+
+deleteDatasources:
+  - name: TestData DB
+    orgId: 1

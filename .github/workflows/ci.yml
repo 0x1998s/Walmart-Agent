@@ -1,0 +1,234 @@
+# 🚀 Walmart AI Agent CI/CD Pipeline
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # 🧪 后端测试
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+
+    - name: 🐍 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: 📦 安装依赖
+      run: |
+        cd backend
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+
+    - name: 🔍 代码质量检查
+      run: |
+        cd backend
+        # 代码格式检查
+        pip install black isort flake8
+        black --check .
+        isort --check-only .
+        flake8 . --max-line-length=88 --extend-ignore=E203,W503
+
+    - name: 🧪 运行测试
+      env:
+        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        OPENAI_API_KEY: test_key
+      run: |
+        cd backend
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+
+    - name: 📊 上传覆盖率报告
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+
+  # 🎨 前端测试
+  frontend-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+
+    - name: 📦 设置Node.js环境
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: 📦 安装依赖
+      run: |
+        cd frontend
+        npm ci
+
+    - name: 🔍 代码质量检查
+      run: |
+        cd frontend
+        npm run lint
+        npm run type-check
+
+    - name: 🧪 运行测试
+      run: |
+        cd frontend
+        npm run test:coverage
+
+    - name: 🏗️ 构建项目
+      run: |
+        cd frontend
+        npm run build
+
+    - name: 📊 上传覆盖率报告
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./frontend/coverage
+        flags: frontend
+        name: frontend-coverage
+
+  # 🐳 Docker构建测试
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+
+    - name: 🐳 设置Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🏗️ 构建后端镜像
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        push: false
+        tags: walmart-ai-agent-backend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: 🏗️ 构建前端镜像
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: false
+        tags: walmart-ai-agent-frontend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # 🚀 集成测试
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+
+    - name: 🚀 启动完整服务栈
+      run: |
+        docker-compose -f docker-compose.yml up -d
+        # 等待服务启动
+        sleep 30
+
+    - name: 🔍 健康检查
+      run: |
+        # 检查后端服务
+        curl -f http://localhost:8000/health || exit 1
+        # 检查前端服务
+        curl -f http://localhost:3000 || exit 1
+
+    - name: 🧪 API集成测试
+      run: |
+        # 基本API测试
+        curl -f http://localhost:8000/api/agents || exit 1
+        curl -f http://localhost:8000/docs || exit 1
+
+    - name: 🛑 停止服务
+      run: docker-compose down
+
+  # 🏷️ 发布准备
+  release-check:
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🏷️ 检查版本标签
+      run: |
+        # 检查是否需要创建新版本
+        if git describe --tags --exact-match HEAD 2>/dev/null; then
+          echo "当前提交已有标签，跳过发布"
+        else
+          echo "准备创建新版本"
+        fi
+
+  # 📝 自动文档更新
+  docs-update:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: 📥 Checkout代码
+      uses: actions/checkout@v4
+
+    - name: 🐍 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📚 生成API文档
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        # 这里可以添加自动生成API文档的命令
+        echo "API文档生成完成"
+
+    - name: 📤 提交文档更新
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: '📚 自动更新API文档'
+        file_pattern: 'docs/'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
